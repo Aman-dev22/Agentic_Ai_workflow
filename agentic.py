@@ -93,3 +93,97 @@ def create_files_tool(state: FileStructureState) -> FileStructureState:
  
     return state
 
+
+import sys
+ 
+def write_code_to_files(state: dict) -> dict:
+ 
+    """Writes code into the generated files based on descriptions and
+    appends requirements to requirements.txt."""
+ 
+    folder_path = state.get("folder_path", "generated_project")
+    file_structure = state.get("file_structure", [])
+    file_descriptions = state.get("file_descriptions", {})
+ 
+    requirements = set()
+ 
+    for file_path in file_structure:
+        full_path = os.path.join(folder_path, file_path)
+        description = file_descriptions.get(file_path, "")
+        print(full_path, description)
+ 
+        prompt = f"""
+        You are a senior FastAPI developer. Generate a complete Python file based **only** on the following description:  
+        {description}  
+ 
+        ### **Constraints:**  
+        - **Only generate code for this specific file:** {file_path}  
+        - **Do not generate code for any other files.**  
+        - **Strictly adhere to the extracted requirements from the description.**  
+        - **Do not assume or add extra functionality beyond what is specified.**  
+        - **Follow FastAPI best practices, keeping the code minimal yet correct.**  
+        - **Use clear and concise variable and function names.**  
+        - **Ensure modularity and error handling but avoid unnecessary abstractions.**  
+        - **Include only relevant docstrings and comments.**  
+        - **Do not generate unit tests unless explicitly requested.**  
+        - **Do Not Give Anything Like pip installs and everything that is present should be python. Do not give notes as well.**
+        """
+ 
+        response = model.invoke(prompt)
+        code = response.content.strip()
+ 
+        code_lines = code.split('\n')
+        filtered_code = "\n".join(line for line in code_lines if "```" not in line)
+ 
+        os.makedirs(os.path.dirname(full_path), exist_ok=True)
+        with open(full_path, "w", encoding="utf-8") as f:
+            f.write(filtered_code)
+ 
+        for line in code_lines:
+            if "import " in line or "from " in line:
+                parts = line.split()
+                if parts[0] == "import":
+                    requirement = parts[1].split('.')[0]
+                elif parts[0] == "from":
+                    requirement = parts[1].split('.')[0]
+                else:
+                    requirement = None  # Ensure requirement is initialized
+                if requirement and requirement not in file_structure and requirement != "main" and requirement not in file_descriptions:
+                    requirements.add(requirement)
+ 
+    requirements_path = os.path.join(folder_path, "requirements.txt")
+    with open(requirements_path, "w") as req_file:
+        for requirement in sorted(requirements):
+            req_file.write(f"{requirement}\n")
+ 
+    if os.path.exists(requirements_path):
+        print("Installing dependencies...")
+        try:
+            result = subprocess.run([sys.executable, "-m", "pip", "install", "-r", requirements_path], check=True, capture_output=True, text=True)
+            print(result.stdout)
+        except subprocess.CalledProcessError as e:
+            print(f"Failed to install dependencies: {e}")
+ 
+    venv_path = os.path.join(folder_path, "venv")
+    if not os.path.exists(venv_path):
+        print("Creating virtual environment...")
+        subprocess.check_call([sys.executable, "-m", "venv", venv_path])
+ 
+    if os.name == "nt":
+        activate_script = os.path.join(venv_path, "Scripts", "activate")
+    else:
+        activate_script = os.path.join(venv_path, "bin", "activate")
+ 
+    env_path = os.path.join(folder_path, ".env")
+    if not os.path.exists(env_path):
+        print("Creating .env file...")
+        with open(env_path, "w") as env_file:
+            env_file.write("KEY=VALUE\n")  
+           
+    if os.path.exists(env_path):
+        print("Loading environment variables...")
+        load_dotenv(env_path)
+ 
+    print("Environment setup complete.")
+    return state
+
