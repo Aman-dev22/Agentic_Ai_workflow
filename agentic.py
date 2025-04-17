@@ -369,3 +369,49 @@ def run_code(state: FileStructureState) -> FileStructureState:
     return state
 
 
+@traceable
+def reflect_on_errors(state: FileStructureState) -> FileStructureState:
+ 
+    """Reflects on errors found during code execution,
+    provides suggestions for improvements, and updates the state with feedback."""
+   
+    if not state["error_log"]:
+        print("No errors found, proceeding to final execution.")
+        return state  
+ 
+    print("Reflecting on errors...")
+    error_summary = "\n".join([f"{k}: {v}" for k, v in state["error_log"].items()])
+   
+    prompt = f"""
+    You are an AI software engineer. The following code execution resulted in errors:
+ 
+    **Error Summary:**
+    {error_summary}
+ 
+    Please provide the best suggestions to improve the code and resolve these errors.
+    """
+ 
+    response = model.invoke(prompt)
+    code_feedback[file_path] = response.content.strip()
+ 
+    state["code_feedback"] = code_feedback
+   
+    return state
+
+
+@traceable
+def final_execution(state: FileStructureState) -> FileStructureState:
+ 
+    """Runs the final version of the error-free code."""
+   
+    folder_path = state["folder_path"]
+ 
+    for file_path in state["file_structure"]:
+        full_path = os.path.join(folder_path, file_path)
+        if not file_path.endswith(".py"):
+            continue  # Skip non-Python files
+ 
+        print(f"Running final version: {file_path}")
+        subprocess.run(["python", full_path])
+ 
+    return state
