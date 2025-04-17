@@ -94,8 +94,8 @@ def create_files_tool(state: FileStructureState) -> FileStructureState:
     return state
 
 
+
 import sys
- 
 def write_code_to_files(state: dict) -> dict:
  
     """Writes code into the generated files based on descriptions and
@@ -187,3 +187,35 @@ def write_code_to_files(state: dict) -> dict:
     print("Environment setup complete.")
     return state
 
+
+@traceable
+def reflect_on_code(state: FileStructureState) -> FileStructureState:
+   
+    """Reads the code and provides feedback for improvements."""
+ 
+    print("Reflecting the code")
+   
+    folder_path = state["folder_path"]
+    code_feedback = {}
+ 
+    for file_path in state["file_structure"]:
+        full_path = os.path.join(folder_path, file_path)
+ 
+        with open(full_path, "r") as f:
+            code = f.read()
+ 
+        prompt = f"""
+        You are a senior software reviewer. Analyze the following code:
+        ```python
+        {code}
+        ```
+        - Identify any missing logic.
+        - Suggest improvements (performance, best practices, security).
+        - List the exact modifications required.
+        """
+ 
+        response = model.invoke(prompt)
+        code_feedback[file_path] = response.content.strip()
+ 
+    state["code_feedback"] = code_feedback
+    return state
