@@ -219,3 +219,65 @@ def reflect_on_code(state: FileStructureState) -> FileStructureState:
  
     state["code_feedback"] = code_feedback
     return state
+
+
+@traceable
+def improve_code(state: FileStructureState) -> FileStructureState:
+   
+    """Applies improvements based on reflection feedback, with human
+    intervention after 3 iterations."""
+ 
+    print("Improving The Code")
+   
+    folder_path = state["folder_path"]
+    code_feedback = state["code_feedback"]
+    state["improvement_count"] = state.get("improvement_count",0) + 1
+ 
+    if state["improvement_count"] >= 0:
+        user_input = input("\nAre You Ok With The Code Generated (yes/no): ").strip().lower()
+        if user_input != "yes":
+            print("\n[Manual Review] Edit the code manually and press Enter to continue...")
+            input()
+            return state
+   
+    for file_path, feedback in code_feedback.items():
+        full_path = os.path.join(folder_path, file_path)
+ 
+        with open(full_path, "r") as f:
+            existing_code = f.read()
+ 
+        prompt = f"""
+        You are a senior software engineer. Improve the following Python code:
+        ```python
+        {existing_code}
+        ```
+        Based on the following feedback:
+        ```
+        {feedback}
+        ```
+        ### **Constraints:**  
+        - **Only generate code for this specific file:** {file_path}  
+        - **Do not generate code for any other files.**  
+        - **Strictly adhere to the extracted requirements from the description.**  
+        - **Do not assume or add extra functionality beyond what is specified.**  
+        - **Follow FastAPI best practices, keeping the code minimal yet correct.**  
+        - **Use clear and concise variable and function names.**  
+        - **Ensure modularity and error handling but avoid unnecessary abstractions.**  
+        - **Include only relevant docstrings and comments.**  
+        - **Do not generate unit tests unless explicitly requested.**  
+        - **Do Not Give Anything Like pip installs and everything that is present should be python. Do not give notes as well.**
+        - **Do Not Add Any Thing Likes notes anything extra strict give only the python code**
+        -- *** DO NOT MENTION ANYTHING ELSE OTHER THAN PYTHON IN THE FILE I DONT WANT YOUR ASUPTIONS AND EVERY THING ELSE SHOULD NOT BE PRESENT NO EXTRA TEXT SHOULD BE PRESENT***
+        """
+ 
+        response = model.invoke(prompt)
+        improved_code = response.content.strip()
+ 
+        code_lines = improved_code.split('\n')
+        filtered_code = "\n".join(line for line in code_lines if "```" not in line)
+ 
+ 
+        with open(full_path, "w") as f:
+            f.write(filtered_code)
+ 
+    return state
