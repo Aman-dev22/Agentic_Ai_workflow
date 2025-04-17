@@ -1,3 +1,4 @@
+# %%
 import os
 import subprocess
 import json
@@ -7,11 +8,11 @@ from langchain_groq import ChatGroq
 from langgraph.graph import StateGraph, START, END
 from dotenv import load_dotenv
  
-
+# %%
 load_dotenv()
 model = ChatGroq(model=os.getenv("MODEL_NAME"), temperature=0, api_key=os.getenv("GROQ_API_KEY"))
 
-
+# %%
 from langsmith import utils
 from langsmith import traceable
 utils.tracing_is_enabled()
@@ -35,7 +36,7 @@ class FileStructureState(TypedDict):
    improvement_count: int
 
 
-
+# %%
 @traceable
 def srs_to_file_structure(state: FileStructureState) -> FileStructureState:
  
@@ -94,7 +95,7 @@ def create_files_tool(state: FileStructureState) -> FileStructureState:
     return state
 
 
-
+# %%
 import sys
 def write_code_to_files(state: dict) -> dict:
  
@@ -187,7 +188,7 @@ def write_code_to_files(state: dict) -> dict:
     print("Environment setup complete.")
     return state
 
-
+# %%
 @traceable
 def reflect_on_code(state: FileStructureState) -> FileStructureState:
    
@@ -220,7 +221,7 @@ def reflect_on_code(state: FileStructureState) -> FileStructureState:
     state["code_feedback"] = code_feedback
     return state
 
-
+# %%
 @traceable
 def improve_code(state: FileStructureState) -> FileStructureState:
    
@@ -282,6 +283,7 @@ def improve_code(state: FileStructureState) -> FileStructureState:
  
     return state
 
+# %%
 @traceable
 def generate_tests(state: FileStructureState) -> FileStructureState:
  
@@ -336,7 +338,7 @@ def generate_tests(state: FileStructureState) -> FileStructureState:
  
     return state
 
-
+# %%
 @traceable
 def run_code(state: FileStructureState) -> FileStructureState:
    
@@ -368,7 +370,7 @@ def run_code(state: FileStructureState) -> FileStructureState:
  
     return state
 
-
+# %%
 @traceable
 def reflect_on_errors(state: FileStructureState) -> FileStructureState:
  
@@ -398,7 +400,7 @@ def reflect_on_errors(state: FileStructureState) -> FileStructureState:
    
     return state
 
-
+# %%
 @traceable
 def final_execution(state: FileStructureState) -> FileStructureState:
  
@@ -416,7 +418,7 @@ def final_execution(state: FileStructureState) -> FileStructureState:
  
     return state
 
-
+# %%
 import shutil
 
 @traceable
@@ -432,7 +434,7 @@ def create_zip(state: FileStructureState) -> FileStructureState:
     state["zip_path"] = zip_name
     return state
 
-
+# %%
 graph = StateGraph(FileStructureState)
 graph.add_node("reflect_on_code", reflect_on_code)
 graph.add_node("improve_code", improve_code)
@@ -471,7 +473,7 @@ except Exception:
     raise(Exception)
 
 
-
+# %%
 # Read the SRS Document
 def read_extracted_text():
     with open("extracted_text.txt", "r",encoding="utf-8") as f:
@@ -485,7 +487,7 @@ import operator
 from typing import Annotated
 
 initial_state = {
-    "srs_text": Annotated[List[str], operator.add],
+    "srs_text": Annotated[list, operator.add],
     "file_structure": None,
     "file_descriptions": None,
     "folder_path": "generated_project",
