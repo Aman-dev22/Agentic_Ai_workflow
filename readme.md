@@ -82,7 +82,7 @@ LangSmith tracks:
 ## 👨‍💻 Author
 
 Made with ❤️ using LangGraph, LLMs, and FastAPI  
-Contributor: [Aman Purohit / GitHub URL]
+Contributor: [Aman Purohit / [GitHub URL](https://github.com/Aman-dev22/Agentic_Ai_workflow/tree/main)]
 
 ---
 
