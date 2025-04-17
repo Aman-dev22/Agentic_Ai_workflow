@@ -281,3 +281,57 @@ def improve_code(state: FileStructureState) -> FileStructureState:
             f.write(filtered_code)
  
     return state
+
+@traceable
+def generate_tests(state: FileStructureState) -> FileStructureState:
+ 
+    """
+    Reads each Python file in the generated project folder and generates a test case
+    for it based on its content. Test cases are stored in a "tests" subfolder as separate files.
+    """
+ 
+    print("Generating test cases for each Python file...")
+    folder_path = state["folder_path"]
+    test_folder = os.path.join(folder_path, "tests")
+    if not os.path.exists(test_folder):
+        os.makedirs(test_folder)
+ 
+    for file_path in state.get("file_structure", []):
+        if not file_path.endswith(".py"):
+            continue
+        full_file_path = os.path.join(folder_path, file_path)
+        with open(full_file_path, "r") as f:
+            code = f.read()
+        print("Creating Test Case For ", full_file_path)
+ 
+        prompt = f"""
+        You are a senior software tester.
+        Analyze the following Python module:
+        ```python
+        {code}
+        ```
+        Based on the module's functionality, generate a complete test case file using a Python testing framework (unittest or pytest).
+        Ensure the tests cover core functionality, error handling, and potential edge cases.
+         **Constraints:**  
+        - **Only generate code for this specific file:**
+        - **Do not generate code for any other files.**  
+        - **Do not assume or add extra functionality beyond what is specified.**  
+        - **Use clear and concise variable and function names.**  
+        - **Ensure modularity and error handling but avoid unnecessary abstractions.**  
+        - **Include only relevant docstrings and comments.**  
+        - **Do Not Give Anything Like pip installs and everything that is present should be python. Do not give notes as well.**
+        - **Do Not Add Any Thing Likes notes anything extra strict give only the python code**
+        -- *** DO NOT MENTION ANYTHING ELSE OTHER THAN PYTHON IN THE FILE I DONT WANT YOUR ASUPTIONS AND EVERY THING ELSE SHOULD NOT BE PRESENT NO EXTRA TEXT SHOULD BE PRESENT***
+        """
+        response = model.invoke(prompt)
+        test_code = response.content.strip()
+ 
+        test_code = "\n".join(line for line in test_code.splitlines() if "```" not in line)
+ 
+        test_file_name = "test_" + os.path.basename(file_path)
+        test_full_path = os.path.join(test_folder, test_file_name)
+        with open(test_full_path, "w") as test_file:
+            test_file.write(test_code)
+        print(f"Generated test case for {file_path} -> {test_file_name}")
+ 
+    return state
