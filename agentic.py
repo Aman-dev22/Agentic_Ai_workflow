@@ -415,3 +415,19 @@ def final_execution(state: FileStructureState) -> FileStructureState:
         subprocess.run(["python", full_path])
  
     return state
+
+
+import shutil
+
+@traceable
+def create_zip(state: FileStructureState) -> FileStructureState:
+    """
+    Packages the entire generated_project folder into a .zip
+    and records its path in the state.
+    """
+    folder = state["folder_path"]
+    zip_name = f"{folder}.zip"
+    # create generated_project.zip next to the folder
+    shutil.make_archive(folder, 'zip', folder)
+    state["zip_path"] = zip_name
+    return state
