@@ -431,3 +431,30 @@ def create_zip(state: FileStructureState) -> FileStructureState:
     shutil.make_archive(folder, 'zip', folder)
     state["zip_path"] = zip_name
     return state
+
+
+graph = StateGraph(FileStructureState)
+graph.add_node("reflect_on_code", reflect_on_code)
+graph.add_node("improve_code", improve_code)
+graph.add_node("run_code", run_code)
+graph.add_node("final_execution", final_execution)
+graph.add_node("srs_to_file_structure", srs_to_file_structure)
+graph.add_node("create_files", create_files_tool)
+graph.add_node("write_code", write_code_to_files)
+graph.add_node("reflect_on_errors", reflect_on_errors)
+graph.add_node("generate_tests", generate_tests)
+graph.add_node("create_zip", create_zip)
+ 
+graph.add_edge(START, "srs_to_file_structure")
+graph.add_edge("srs_to_file_structure", "create_files")
+graph.add_edge("create_files", "write_code")
+graph.add_edge("write_code", "reflect_on_code")
+graph.add_edge("reflect_on_code", "improve_code")
+graph.add_edge("improve_code", "reflect_on_code")
+graph.add_edge("improve_code", "generate_tests")
+graph.add_edge("generate_tests", "run_code")
+graph.add_edge("run_code", "reflect_on_errors")
+graph.add_edge("reflect_on_errors", "improve_code")
+graph.add_edge("run_code", "final_execution")
+graph.add_edge("final_execution", "create_zip")
+graph.add_edge("create_zip", END)
