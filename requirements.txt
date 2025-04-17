@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+python-multipart
+langchain-groq
+langgraph
+langsmith
+python-dotenv
+python-docx
+ipython
