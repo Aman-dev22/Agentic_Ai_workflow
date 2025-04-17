@@ -458,3 +458,42 @@ graph.add_edge("reflect_on_errors", "improve_code")
 graph.add_edge("run_code", "final_execution")
 graph.add_edge("final_execution", "create_zip")
 graph.add_edge("create_zip", END)
+
+workflow = graph.compile()
+ 
+# %%
+# Mermaid Image Of Png
+from IPython.display import Image, display
+
+try:
+    display(Image(workflow.get_graph().draw_mermaid_png()))
+except Exception:
+    raise(Exception)
+
+
+
+# Read the SRS Document
+def read_extracted_text():
+    with open("extracted_text.txt", "r",encoding="utf-8") as f:
+        return f.read()
+ 
+# %%
+srs_text_doc = read_extracted_text()
+ 
+# %%
+import operator
+from typing import Annotated
+
+initial_state = {
+    "srs_text": Annotated[List[str], operator.add],
+    "file_structure": None,
+    "file_descriptions": None,
+    "folder_path": "generated_project",
+    "error_log": None,
+    "retry_count": 0,
+    "code_feedback": None
+}
+ 
+# %%
+# Workflow Starts Here
+workflow.invoke(initial_state)
