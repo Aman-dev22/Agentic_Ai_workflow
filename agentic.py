@@ -335,3 +335,35 @@ def generate_tests(state: FileStructureState) -> FileStructureState:
         print(f"Generated test case for {file_path} -> {test_file_name}")
  
     return state
+
+
+@traceable
+def run_code(state: FileStructureState) -> FileStructureState:
+   
+    """Runs the generated code, captures errors, and retries if necessary."""
+ 
+    print("Came Inside Runners")
+   
+    folder_path = state["folder_path"]
+    error_log = None
+ 
+    for file_path in state["file_structure"]:
+        full_path = os.path.join(folder_path, file_path)
+        if not file_path.endswith(".py"):
+            continue
+ 
+        try:
+            result = subprocess.run(["python", full_path], capture_output=True, text=True)
+            if result.returncode != 0:
+                error_log = result.stderr.strip()
+                print(f"Error in {file_path}:\n{error_log}")
+        except Exception as e:
+            error_log = str(e)
+ 
+    state["error_log"] = error_log
+    state["retry_count"] += 1
+ 
+    if error_log and state["retry_count"] < os.getenv("MAX_RETRIES"):
+        return state  # Retry fixing the errors
+ 
+    return state
