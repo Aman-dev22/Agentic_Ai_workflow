@@ -70,3 +70,26 @@ def srs_to_file_structure(state: FileStructureState) -> FileStructureState:
         print("JSON data not found")
  
     return state
+
+
+@traceable
+def create_files_tool(state: FileStructureState) -> FileStructureState:
+ 
+    """Creates files and stores descriptions for the next step."""
+   
+    folder_path = state.get("folder_path", "generated_project")
+    file_structure = state.get("file_structure", [])
+    file_descriptions = state.get("file_descriptions", {})
+ 
+    if not os.path.exists(folder_path):
+        os.makedirs(folder_path)
+ 
+    for file_path in file_structure:
+        full_path = os.path.join(folder_path, file_path)
+        os.makedirs(os.path.dirname(full_path), exist_ok=True)
+ 
+        with open(full_path, "w",encoding="utf-8") as f:
+            f.write(f"# Description: {file_descriptions.get(file_path, 'No description available')}\n\n")
+ 
+    return state
+
