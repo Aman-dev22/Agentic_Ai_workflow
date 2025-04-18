@@ -12,10 +12,13 @@ from dotenv import load_dotenv
 load_dotenv()
 model = ChatGroq(model=os.getenv("MODEL_NAME"), temperature=0, api_key=os.getenv("GROQ_API_KEY"))
 
+
+
 # %%
 from langsmith import utils
 from langsmith import traceable
 utils.tracing_is_enabled()
+
 
 import operator
 from typing import Annotated
@@ -30,8 +33,8 @@ class FileStructureState(TypedDict):
    improvement_count (int)."""
    
    srs_text: Annotated[str,operator.add]
-   file_structure: Optional[List[str]]
-   file_descriptions: Optional[Dict[str, str]]
+   file_structure: Annotated[List[str], operator.add]
+   file_descriptions: Annotated[Dict[str, str], lambda a, b: {**a, **b}]
    folder_path: str
    error_log: Optional[str]
    retry_count: int
@@ -81,7 +84,7 @@ def create_files_tool(state: FileStructureState) -> FileStructureState:
  
     """Creates files and stores descriptions for the next step."""
    
-    folder_path = state.get("folder_path", "generated_project")
+    folder_path = state.get("folder_path", os.getenv("FOLDER_PATH"))
     file_structure = state.get("file_structure", [])
     file_descriptions = state.get("file_descriptions", {})
  
@@ -105,7 +108,7 @@ def write_code_to_files(state: dict) -> dict:
     """Writes code into the generated files based on descriptions and
     appends requirements to requirements.txt."""
  
-    folder_path = state.get("folder_path", "generated_project")
+    folder_path = state.get("folder_path", "generated_project_root")
     file_structure = state.get("file_structure", [])
     file_descriptions = state.get("file_descriptions", {})
  
@@ -247,7 +250,7 @@ def improve_code(state: FileStructureState) -> FileStructureState:
     for file_path, feedback in code_feedback.items():
         full_path = os.path.join(folder_path, file_path)
  
-        with open(full_path, "r") as f:
+        with open(full_path, "r",encoding="utf-8") as f:
             existing_code = f.read()
  
         prompt = f"""
@@ -489,9 +492,9 @@ srs_text_doc = read_extracted_text()
 
 initial_state = {
     "srs_text": srs_text_doc,
-    "file_structure": None,
-    "file_descriptions": None,
-    "folder_path": "generated_project",
+    "file_structure": [],
+    "file_descriptions": {},
+    "folder_path": os.getenv("FOLDER_PATH"),
     "error_log": None,
     "retry_count": 0,
     "code_feedback": None
