@@ -33,8 +33,8 @@ This project builds an intelligent system that takes a Software Requirements Spe
 
 ```bash
 # 1. Clone the repository
-git clone <your-repo-url>
-cd <your-repo-folder>
+git clone https://github.com/Aman-dev22/Agentic_Ai_workflow.git
+cd Agentic_Ai_workflow
 
 # 2. Set up virtual environment
 python -m venv venv
