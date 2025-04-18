@@ -16,6 +16,9 @@ model = ChatGroq(model=os.getenv("MODEL_NAME"), temperature=0, api_key=os.getenv
 from langsmith import utils
 from langsmith import traceable
 utils.tracing_is_enabled()
+
+import operator
+from typing import Annotated
  
 
 class FileStructureState(TypedDict):
@@ -26,7 +29,7 @@ class FileStructureState(TypedDict):
    Optional[str]), retry_count (int), code_feedback (Optional[Dict[str, str]]),
    improvement_count (int)."""
    
-   srs_text: str
+   srs_text: Annotated[str,operator.add]
    file_structure: Optional[List[str]]
    file_descriptions: Optional[Dict[str, str]]
    folder_path: str
@@ -89,7 +92,7 @@ def create_files_tool(state: FileStructureState) -> FileStructureState:
         full_path = os.path.join(folder_path, file_path)
         os.makedirs(os.path.dirname(full_path), exist_ok=True)
  
-        with open(full_path, "w",encoding="utf-8") as f:
+        with open(full_path, "w") as f:
             f.write(f"# Description: {file_descriptions.get(file_path, 'No description available')}\n\n")
  
     return state
@@ -288,7 +291,7 @@ def improve_code(state: FileStructureState) -> FileStructureState:
 def generate_tests(state: FileStructureState) -> FileStructureState:
  
     """
-    Reads each Python file in the generated project folder and generates a test case
+    Reads each Python file in the generated project folder and generates a test case using libraray
     for it based on its content. Test cases are stored in a "tests" subfolder as separate files.
     """
  
@@ -482,12 +485,10 @@ def read_extracted_text():
 # %%
 srs_text_doc = read_extracted_text()
  
-# %%
-import operator
-from typing import Annotated
+
 
 initial_state = {
-    "srs_text": Annotated[list, operator.add],
+    "srs_text": srs_text_doc,
     "file_structure": None,
     "file_descriptions": None,
     "folder_path": "generated_project",
