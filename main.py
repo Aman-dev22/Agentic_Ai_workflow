@@ -5,6 +5,10 @@ from docx import Document
 import io
 import shutil
 from pathlib import Path
+from dotenv import load_dotenv
+
+
+load_dotenv()
  
 app = FastAPI()
  
@@ -48,10 +52,11 @@ from fastapi.responses import FileResponse
 @app.get("/download")
 def download_zip():
     """
-    Streams back the ZIP file named `generated_project.zip`
+    Streams back the ZIP file named `generated_project_root.zip`
     from the current working directory.
     """
-    zip_path = "generated_project.zip"
+    zip_path = os.getenv("FOLDER_PATH")
+    
     if not os.path.isfile(zip_path):
         raise HTTPException(status_code=404, detail="ZIP file not found.")
     return FileResponse(
